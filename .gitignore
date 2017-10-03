@@ -1,0 +1,10 @@
+*.*.backup*
+*.*.save*
+backups
+*.out
+*.key
+mainEncrypt.cpp.save
+main*
+checkBigInt.cpp
+genPrime.cpp
+*.gch
