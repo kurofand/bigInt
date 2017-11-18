@@ -1,8 +1,9 @@
 #include "bigInt.h"
+#include <memory>
 
 bigInt::bigInt()
 {
-	std::cout<<"enter into creator"<<std::endl;
+	std::cout<<"enter into blank creator"<<std::endl;
 	this->positive=true;
 	this->size=1;
 	this->number=new uint16_t[1];
@@ -11,7 +12,7 @@ bigInt::bigInt()
 
 bigInt::bigInt(uint32_t numb)
 {
-	std::cout<<"enter into creator"<<std::endl;
+	std::cout<<"enter into creator from uint"<<std::endl;
 	this->size=returnNumbSize(numb);
 	this->number=new uint16_t [this->size];
 	for(unsigned int i=0;i<this->size;i++)
@@ -19,18 +20,44 @@ bigInt::bigInt(uint32_t numb)
 		this->number[i]=numb%10;
 		numb=numb/10;
 	}
-	this->positive=checkPositive(this->number,this->size);
+//	this->positive=checkPositive(this->number,this->size);
 }
 
+bigInt::bigInt(int numb)
+{
+	std::cout<<"enter into creator from int"<<std::endl;
+	this->positive=numb>=0;
+	if(numb<0)
+		numb=numb*(-1);
+	this->size=returnNumbSize(numb);
+	this->number=new uint16_t [this->size];
+	for(unsigned int i=0;i<this->size;i++)
+	{
+		this->number[i]=numb%10;
+		numb=numb/10;
+	}
+}
+/*
+bigInt::bigInt(const bigInt &obj)
+{
+	std::cout<<"enter into bigInt bigInt creator"<<std::endl;
+	std::cout<<obj.size<<std::endl;
+	if(obj.size>5)
+		;
+	number=new uint16_t [obj.size];
+	for(unsigned int i=0;i<obj.size;i++)
+		number[i]=obj.number[i];
+}
+*/
 bigInt::~bigInt()
 {
 	std::cout<<"enter into destructor"<<std::endl;
-	delete [] number;
+//	delete [] number;
 }
 
 bigInt::bigInt(uint1024_t numb)
 {
-	std::cout<<"enter into creator"<<std::endl;
+	std::cout<<"enter into creator from int1024"<<std::endl;
 	this->size=returnNumbSize(numb);
 	this->number=new uint16_t [this->size];
 	this->number=boostLongToBigInt(numb);
@@ -58,76 +85,96 @@ bool bigInt::checkPositive(uint16_t *number, uint16_t size)
 		return false;
 }
 
+uint16_t* bigInt::returnNumber()
+{
+	std::cout<<"enter into returnNumber"<<std::endl;
+	uint16_t* arr=new uint16_t[this->size];
+	for(uint16_t i=0;i<this->size;i++)
+		arr[i]=this->number[i];
+	return arr;
+
+}
+
 bigInt bigInt::operator=(const bigInt &obj)
 {
 	std::cout<<"called bigInt equal"<<std::endl;
+//	std::cout<<&obj<<std::endl;
 	delete [] number;
+//	std::cout<<"size="<<obj.size<<std::endl;
 	size=obj.size;
 	number=new uint16_t [size];
+//	std::cout<<"address:"<<obj.number<<std::endl;
+//	std::cout<<"show numb"<<std::endl;
 	for(unsigned int i=0;i<size;i++)
 	{
+//		std::cout<<obj.number[i]<<std::endl;
 		number[i]=obj.number[i];
 	}
+//	std::cout<<"showed numb"<<std::endl;
 	positive=obj.positive;
 	return *this;
 }
 
 bigInt bigInt::operator+(const bigInt &b)
 {
+	std::shared_ptr<bigInt> bufInt(new bigInt);
+//	std::cout<<"after declaration of variable"<<std::endl;
+	bufInt->size=this->size;
+//	std::cout<<"after setting a size"<<std::endl;
+	bufInt->number=this->returnNumber();
+	bufInt->positive=this->positive;
 	std::cout<<"enter into plus overload"<<std::endl;
 	if(this->size<b.size)
 	{
-		for(unsigned int i=this->size;i<=b.size;i++)
-			this->number[i]=0;
-		this->size=b.size;
+		for(unsigned int i=bufInt->size;i<=b.size;i++)
+			bufInt->number[i]=0;
+		bufInt->size=b.size;
 	}
 
-	for(unsigned int i=0;i<=this->size;i++)
+	for(unsigned int i=0;i<bufInt->size;i++)
+	{
+		bufInt->number[i]=bufInt->number[i]+b.number[i];
+//		std::cout<<"this->number["<<i<<"]="<<this->number[i]<<std::endl;
+		if(bufInt->number[i]>9)
 		{
-			this->number[i]=this->number[i]+b.number[i];
-			if(this->number[i]>9)
-			{
-				this->number[i+1]++;
-				this->number[i]=this->number[i]%10;
-			}
+			uint16_t buf=bufInt->number[i];
+			bufInt->number[i+1]=buf+1;
+//			std::cout<<"this->number["<<i<<"+1]="<<this->number[i+1]<<std::endl;
+			bufInt->number[i]=buf%10;
+//			std::cout<<"this->number["<<i<<"]="<<this->number[i]<<std::endl;
 		}
-	return *this;
+	}
+//	std::cout<<bufInt<<std::endl;
+	return *bufInt;
 }
-
+//there is a problem - if it changes this, left argument will be changed
 bigInt bigInt::operator+(const int32_t numb)
 {
-	uint16_t *arr;//intToBigInt(numb);
-//	std::cout<<"array="<<arr<<std::endl;
-	uint8_t numbSize=returnNumbSize(numb);
-	arr=new uint16_t [numbSize];
-	arr=intToBigInt(numb);
-	if(this->size<numbSize)
-	{
-		for(unsigned int i=this->size; i<=numbSize; i++)
-			this->number[i]=0;
-		this->size=numbSize;
-	}
-
-	for(unsigned int i=0;i<=this->size;i++)
-	{
-		this->number[i]=this->number[i]+arr[i];
-		if(this->number[i]>9)
-		{
-			this->number[i+1]++;
-			this->number[i]=this->number[i]%10;
-		}
-	}
-	delete arr;
-	return *this;
+	std::cout<<"enter into int plus overload"<<std::endl;
+	bigInt lInt;
+	bigInt rInt=numb;
+	lInt.size=this->size;
+	lInt.number=this->returnNumber();
+	lInt.positive=this->positive;
+	std::shared_ptr<bigInt> resInt(new bigInt);
+	*resInt=lInt+rInt;
+	return *resInt;
 }
 
 bigInt bigInt::operator-(const bigInt &b)
 {
-
-	return *this;
+	std::shared_ptr<bigInt> resInt(new bigInt);
+	bigInt a;
+	a.size=this->size;
+	a.number=this->returnNumber();
+	a.positive=this->positive;
+	if(!a.positive&&!b.positive)
+		*resInt=a+b;
+	return *resInt;
 }
 /*bigInt bigInt::operator=(const uint1024_t &numb)
 {
+
 	delete [] number;
 	size=returnNumbSize(numb);
 	number=new uint16_t [size];
@@ -228,4 +275,179 @@ void bigInt::show()
 //	for(unsigned int i=0;i<size;i++)
 //		std::cout<<"number["<<i<<"]= "<<number[i]<<std::endl;
 	std::cout<<std::endl;
+}
+
+bool bigInt::operator<(const bigInt &b)
+{
+	if((this->positive)&&(b.positive))
+		if(this->size>b.size)
+			return false;
+		else
+			if(this->size<b.size)
+				return true;
+			else
+			/*{
+				unsigned int count=0;
+				for(unsigned int i=this->size-1;i>=0;i--)
+					if(this->number[i]>b.number[i])
+						return false;
+					else
+						if(this->number[i]<b.number[i])
+							count++;
+				if(count==this->size)
+					return true;
+				else
+					return false;
+			}*/
+			return this->moduleLower(b);
+	else
+		if((!this->positive)&&(b.positive))
+			return true;
+		else
+			if((this->positive)&&(!b.positive))
+				return false;
+			else
+				if(this->moduleBigger(b))
+					return true;
+				else
+					return false;
+}
+
+bool bigInt::operator>(const bigInt &b)
+{
+	if(this->positive&&b.positive)
+		return this->moduleBigger(b);
+	else
+		if((!this->positive)&&(b.positive))
+			return false;
+		else
+			if((this->positive)&&(!b.positive))
+				return true;
+			else
+				if(this->moduleLower(b))
+					return true;
+				else
+					return false;
+}
+
+bool bigInt::operator==(const bigInt &b)
+{
+	if((this->size==b.size)&&(this->positive==b.positive))
+	{
+		for(int i=this->size-1;i>=0;i--)
+			if(this->number[i]!=b.number[i])
+				return false;
+		return true;
+	}
+	else
+		return false;
+}
+
+bool bigInt::operator>=(const bigInt &b)
+{
+	if(this->positive&&b.positive)
+		if(this->size<b.size)
+			return false;
+		else
+			if(this->size>b.size)
+				return true;
+			else
+				return moduleBigger(b, true);
+	else
+		if((this->positive)&&(!b.positive))
+			return true;
+		else
+			if((!this->positive)&&(b.positive))
+				return false;
+			else
+				/*if(this->moduleBigger(b, true))
+					return true;
+				else
+					return false;*/
+				return moduleLower(b, true);
+}
+
+bool bigInt::operator<=(const bigInt &b)
+{
+	if(this->positive&&b.positive)
+		if(this->size>b.size)
+			return false;
+		else
+			if(this->size<b.size)
+				return true;
+			else
+			{
+				return moduleLower(b, true);
+				unsigned int count=0;
+				for(unsigned int i=this->size;i>=0;i--)
+					if(this->number[i]>b.number[i])
+						return false;
+					else
+						count++;
+				if(count==this->size)
+					return true;
+				else
+					return false;
+			}
+	else
+		if(!this->positive&&b.positive)
+			return true;
+		else
+			if(this->positive&&!b.positive)
+				return false;
+			else
+				return moduleBigger(b, true);
+}
+
+bool bigInt::moduleBigger(const bigInt &b, bool equal)
+{
+	if(this->size<b.size)
+		return false;
+	else
+		if(this->size>b.size)
+			return true;
+		else
+		{
+			unsigned int count=0;
+			for(int i=this->size-1;i>=0;i--)
+				if(this->number[i]<b.number[i])
+					return false;
+				else
+				{
+					count++;
+					if((this->number[i]>b.number[i])&&(!equal))
+						count++;
+				}
+			if(((count>this->size)&&(!equal))||((count==this->size)&&(equal)))
+				return true;
+			else
+				return false;
+		}
+}
+
+bool bigInt::moduleLower(const bigInt &b, bool equal)
+{
+	std::cout<<"enter modulelower"<<std::endl;
+	if(this->size>b.size)
+		return false;
+	else
+		if(this->size<b.size)
+			return true;
+		else
+		{
+			unsigned int count=0;
+			for(int i=this->size-1;i>=0;i--)
+				if(this->number[i]>b.number[i])
+					return false;
+				else
+				{
+					count++;
+					if((this->number[i]<b.number[i])&&(!equal))
+						count++;
+				}
+			if(((count>this->size)&&(!equal))||((count==this->size)&&(equal)))
+				return true;
+			else
+				return false;
+		}
 }
